@@ -31,7 +31,7 @@ public class Block {
 	 * Sequence of instructions contained in a block.
 	 */
 	protected List<Instruction> instructions;
-    protected SymbolTable tds;
+    	protected SymbolTable tds;
 	/**
 	 * Constructor for a block.
 	 */
@@ -127,7 +127,11 @@ public class Block {
 	 * @return Synthesized True if the instruction is well typed, False if not.
 	 */	
 	public boolean checkType() {
-		throw new SemanticsUndefinedException("Semantics checkType is undefined in Block.");
+		boolean test = true;
+		for(Instruction ins : instructions){
+			test = test && ins.checkType();
+		}
+		return test;
 	}
 
 	/**
@@ -137,7 +141,10 @@ public class Block {
 	 * @param _offset Inherited Current offset for the address of the variables.
 	 */	
 	public void allocateMemory(Register _register, int _offset) {
-		throw new SemanticsUndefinedException("Semantics allocateMemory is undefined in Block.");
+		int address = _offset ;
+		for(Instruction ins : instructions){
+			address += ins.allocateMemory(_register,address);
+		}
 	}
 
 	/**
@@ -147,7 +154,24 @@ public class Block {
 	 * @return Synthesized AST for the generated TAM code.
 	 */
 	public Fragment getCode(TAMFactory _factory) {
-		throw new SemanticsUndefinedException("Semantics generateCode is undefined in Block.");
+		Fragment frag = _factory.createFragment();
+		FunctionDeclaration f = null;
+		for(Instruction ins : instructions){
+			if(ins instanceof FunctionDeclaration){
+				f = (FunctionDeclaration) ins;
+				continue;
+			}
+			frag.append(ins.getCode(_factory));
+		}
+		if(instructions.size() == 0){
+			frag.add(_factory.createPush(0));
+
+		}
+		if(f!=null){
+			frag.add(_factory.createHalt());
+			frag.append(f.getCode(_factory));
+		}
+		return frag;
 	}
 
 }
